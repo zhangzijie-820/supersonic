@@ -18,6 +18,6 @@ public class DatabaseParameter {
     private String placeholder;
     private String value;
     private String dataType = "string";
-    private Boolean require = true;
+    private Boolean require = false;
     private List<Object> candidateValues;
 }

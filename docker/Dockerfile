@@ -7,6 +7,10 @@ WORKDIR /usr/src/app
 # Argument to pass in the supersonic version at build time
 ARG SUPERSONIC_VERSION
 
+RUN echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian bookworm main contrib non-free-firmware" > /etc/apt/sources.list &&  \
+    echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian-security bookworm-security main contrib non-free-firmware" >> /etc/apt/sources.list &&  \
+    echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian bookworm-updates main contrib non-free-firmware" >> /etc/apt/sources.list
+
 # Install necessary packages, including MySQL client
 RUN apt-get update && \
     apt-get install -y default-mysql-client unzip && \

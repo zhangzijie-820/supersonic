@@ -46,16 +46,32 @@ public class DataSourceNode extends SemanticNode {
             sqlTable = datasource.getSqlQuery();
         } else if (datasource.getTableQuery() != null && !datasource.getTableQuery().isEmpty()) {
             if (datasource.getType().equalsIgnoreCase(EngineType.POSTGRESQL.getName())) {
-                String fullTableName = Arrays.stream(datasource.getTableQuery().split("\\."))
-                        .collect(Collectors.joining(".public."));
-                sqlTable = "select * from " + fullTableName;
+                sqlTable = "select * from " + datasource.getTableQuery();
+            } else if (datasource.getType().equalsIgnoreCase(EngineType.HIVE2.getName())) {
+                switch (datasource.getTableQuery().split("\\.").length) {
+                    case 2:
+                        String[] parts = datasource.getTableQuery().split("\\.", 2); // 限制拆分次数为2
+                        String schema = parts[0];
+                        String tableName = parts[1];
+                        sqlTable =
+                                "select * from " + "`" + schema + "`" + "." + "`" + tableName + "`";
+                        break;
+                    default:
+                        // 如果不包含模式（schema），直接使用反引号包裹
+                        sqlTable = "select * from " + "`" + datasource.getTableQuery() + "`";
+                        break;
+                }
             } else {
                 sqlTable = "select * from " + datasource.getTableQuery();
             }
         }
+
         if (sqlTable.isEmpty()) {
             throw new Exception("DatasourceNode build error [tableSqlNode not found]");
         }
+
+        log.info("sql table is {}", sqlTable);
+
         SqlNode source = getTable(sqlTable, scope, EngineType.fromString(datasource.getType()));
         addSchema(scope, datasource, sqlTable);
         return buildAs(datasource.getName(), source);
@@ -70,9 +86,29 @@ public class DataSourceNode extends SemanticNode {
             if (entry.getKey().indexOf(".") > 0) {
                 db = entry.getKey().substring(0, entry.getKey().lastIndexOf("."));
                 tb = entry.getKey().substring(entry.getKey().lastIndexOf(".") + 1);
+
+                db = removeSurroundingBackticks(db);
+                tb = removeSurroundingBackticks(tb);
+
+                log.info("db is {}, tb is {}", db, tb);
             }
             addSchemaTable(scope, datasource, db, tb, entry.getValue());
         }
+    }
+
+    private static String removeSurroundingBackticks(String input) {
+        if (input == null || input.length() < 2) {
+            return input;
+        }
+
+        char startChar = input.charAt(0);
+        char endChar = input.charAt(input.length() - 1);
+
+        if (startChar == '`' && endChar == '`') {
+            return input.substring(1, input.length() - 1);
+        }
+
+        return input;
     }
 
     private static void addSchemaTable(SqlValidatorScope scope, DataSource datasource, String db,

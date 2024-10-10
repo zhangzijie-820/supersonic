@@ -160,10 +160,24 @@ public class AggPlanner implements Planner {
 
     private SqlNode optimizeSql(String sql, EngineType engineType) {
         try {
+            log.info(
+                    "scope is {}, schema is {}, sql is {}, engine type is {}",
+                    scope,
+                    schema,
+                    sql,
+                    engineType);
+
             SqlNode sqlNode =
                     SqlParser.create(sql, Configuration.getParserConfig(engineType)).parseStmt();
+
+            log.info("created sql node is {}", sqlNode);
+
             if (Objects.nonNull(sqlNode)) {
-                return SemanticNode.optimize(scope, schema, sqlNode, engineType);
+                SqlNode optimizeSqlNode = SemanticNode.optimize(scope, schema, sqlNode, engineType);
+
+                log.info("optimized sql node is {}", optimizeSqlNode);
+
+                return optimizeSqlNode;
             }
         } catch (Exception e) {
             log.error("optimize error {}", e);

@@ -8,7 +8,8 @@ public enum EngineType {
     KAFKA(4, "kafka"),
     H2(5, "h2"),
     POSTGRESQL(6, "postgresql"),
-    OTHER(7, "other");
+    HIVE2(7, "hive2"),
+    OTHER(8, "other");
 
     private Integer code;
 
